@@ -21,7 +21,7 @@ class CBJQAutoBot:
         print(self.rect)
         self.ocr = PaddleOCR(use_gpu=True, use_angle_cls=True, lang='ch', ocr_version='PP-OCRv4')
         self.screen = []
-        region = np.array([(0.068, 0.25, 0.292, 0.73), (0.388, 0.25, 0.612, 0.73), (0.708, 0.25, 0.932, 0.73)])
+        region = np.array([(0.052, 0.246, 0.312, 0.801), (0.37, 0.246, 0.63, 0.801), (0.688, 0.246, 0.948, 0.801)])
         self.region = [self.rect[2] - self.rect[0], self.rect[3] - self.rect[1]] * 2 * region
 
     def capture(self) -> None:
@@ -49,7 +49,7 @@ class CBJQAutoBot:
 
     def click(self, text: str) -> bool:
         for i in self.screen:
-            if i[1][0] == text:
+            if i[1][0].find(text) != -1:
                 i[0] = np.array(i[0]) + np.array(self.rect[:2])
                 # print(i[0])
                 pos = i[0][2]  # 左上 右上 右下(2) 左下
@@ -59,6 +59,7 @@ class CBJQAutoBot:
         return False
 
     def run(self) -> None:
+        cnt = 0
         while True:
             try:
                 self.capture()
@@ -82,21 +83,35 @@ class CBJQAutoBot:
                     self.click('开始作战')
                 elif self.check(['第.+波', '击败来袭的敌方目标']):
                     print('战斗中')
-                    pyautogui.press('q')
-                    sleep(0.2)
-                    pyautogui.press('e')
-                    sleep(0.5)
+                    if cnt < 8:
+                        pyautogui.press('e')
+                        cnt += 1
+                    else:
+                        pyautogui.press('q')
+                        cnt = 0
                 elif self.check(['选择增益', '确认']):
                     print('选择增益')
+                    choice = [[], [], []]
                     for i in self.skill():
                         if not '单体' in i:
-                            self.click(i[0])
-                            break
+                            if not '该增益已获取' in i:
+                                choice[0].append(i[0])
+                            choice[1].append(i[0])
+                        else:
+                            choice[2].append(i[1])
+                    if len(choice[0]):
+                        self.click(choice[0][0])
+                    elif len(choice[1]):
+                        self.click(choice[1][0])
+                    else:
+                        self.click(choice[2][0])
                     self.click('确认')
                 elif self.check(['单体', '丢弃']):
                     print('选择增益-单体')
-                    pyautogui.moveTo(self.rect[2] - 100, self.rect[3] - 100, duration=0.1)
-                    pyautogui.click()
+                    self.click('丢弃')
+                elif self.check(['丢弃在试炼中选择的增益', '取消', '确定']):
+                    print('丢弃增益')
+                    self.click('确定')
                 elif self.check(['奖励列表', '退出']):
                     print('战斗结算')
                     self.click('退出')
