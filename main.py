@@ -113,5 +113,5 @@ class CBJQAutoBot:
 
 
 if __name__ == "__main__":
-    bot = GameAutoBot()
+    bot = CBJQAutoBot()
     bot.run()
