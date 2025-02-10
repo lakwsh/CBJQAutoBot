@@ -1,4 +1,6 @@
+import ctypes
 import re
+from sys import exit
 from time import sleep
 
 import numpy as np
@@ -132,5 +134,8 @@ class CBJQAutoBot:
 
 
 if __name__ == "__main__":
+    if not ctypes.windll.shell32.IsUserAnAdmin():
+        print('请使用管理员权限运行脚本')
+        exit(1)
     bot = CBJQAutoBot(gpu=True)
     bot.run()

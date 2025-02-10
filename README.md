@@ -7,6 +7,9 @@
 ## 前置条件
  - 拥有角色: 晨星-琼弦
  - 拥有增益: 护盾·夺取
+## 懒人版
+ - 此版本使用CPU进行文字识别
+ - [跳转下载](https://github.com/lakwsh/CBJQAutoBot/releases/latest)
 ## 源码运行
  - **注意: 使用GPU的性能约为CPU的1.5~3.5倍(参考值)**
  - 使用GPU文字识别
