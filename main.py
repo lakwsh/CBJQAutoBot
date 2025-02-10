@@ -46,9 +46,11 @@ class CBJQAutoBot:
         for i in self.region:
             lst = []
             for res in self.screen:
-                # print(res[0], i)
+                # print(res, i)
                 if i[0] <= res[0][0][0] <= i[2] and i[1] <= res[0][0][1] <= i[3]:
                     lst.append(res[1][0])
+            if not len(lst):
+                raise Exception("增益获取失败")
             skill.append(lst)
         return skill
 
@@ -130,7 +132,7 @@ class CBJQAutoBot:
                 break
             except Exception as e:
                 print(f"错误: {str(e)}")
-                break
+                continue
 
 
 if __name__ == "__main__":
