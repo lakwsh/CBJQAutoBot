@@ -7,10 +7,11 @@ import win32con
 import win32gui
 from PIL import ImageGrab
 from paddleocr import PaddleOCR
+from paddleocr.ppocr.utils.logging import get_logger
 
 
 class CBJQAutoBot:
-    def __init__(self) -> None:
+    def __init__(self, gpu: bool) -> None:
         hwnd = win32gui.FindWindow(None, '尘白禁区')
         if not hwnd:
             raise Exception("未找到游戏窗口")
@@ -19,7 +20,9 @@ class CBJQAutoBot:
         sleep(0.1)
         self.rect = win32gui.GetWindowRect(hwnd)
         print(self.rect)
-        self.ocr = PaddleOCR(use_gpu=True, use_angle_cls=True, lang='ch', ocr_version='PP-OCRv4')
+        self.gpu = gpu
+        get_logger().setLevel(0)
+        self.ocr = PaddleOCR(use_gpu=gpu, use_angle_cls=True, lang='ch', ocr_version='PP-OCRv4')
         self.screen = []
         region = np.array([(0.052, 0.246, 0.312, 0.801), (0.37, 0.246, 0.63, 0.801), (0.688, 0.246, 0.948, 0.801)])
         self.region = [self.rect[2] - self.rect[0], self.rect[3] - self.rect[1]] * 2 * region
@@ -55,6 +58,7 @@ class CBJQAutoBot:
                 pos = i[0][2]  # 左上 右上 右下(2) 左下
                 pyautogui.moveTo(pos[0], pos[1], duration=0.1)
                 pyautogui.click()
+                sleep(0.1)
                 return True
         return False
 
@@ -118,15 +122,15 @@ class CBJQAutoBot:
                 else:
                     sleep(1)
                     continue
-                sleep(0.5)
+                sleep(0.5 if self.gpu else 0.25)
             except KeyboardInterrupt:
                 print("脚本已停止")
                 break
             except Exception as e:
                 print(f"错误: {str(e)}")
-                sleep(1)
+                break
 
 
 if __name__ == "__main__":
-    bot = CBJQAutoBot()
+    bot = CBJQAutoBot(gpu=True)
     bot.run()
