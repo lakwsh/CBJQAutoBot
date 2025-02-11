@@ -14,13 +14,14 @@ from paddleocr.ppocr.utils.logging import get_logger
 
 class CBJQAutoBot:
     def __init__(self, gpu: bool) -> None:
-        hwnd = win32gui.FindWindow(None, '尘白禁区')
-        if not hwnd:
-            raise Exception("未找到游戏窗口")
-        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-        win32gui.SetForegroundWindow(hwnd)
+        self.hwnd = win32gui.FindWindow(None, '尘白禁区')
+        if not self.hwnd:
+            print("未找到游戏窗口")
+            exit(1)
+        win32gui.ShowWindow(self.hwnd, win32con.SW_RESTORE)
+        win32gui.SetForegroundWindow(self.hwnd)
         sleep(0.1)
-        self.rect = win32gui.GetWindowRect(hwnd)
+        self.rect = win32gui.GetWindowRect(self.hwnd)
         print(self.rect)
         self.gpu = gpu
         get_logger().setLevel(0)
@@ -30,11 +31,14 @@ class CBJQAutoBot:
         self.region = [self.rect[2] - self.rect[0], self.rect[3] - self.rect[1]] * 2 * region
 
     def capture(self) -> None:
+        if not win32gui.IsWindow(self.hwnd):
+            print('无法找到游戏窗口')
+            exit(1)
         self.screen = self.ocr.ocr(img=np.array(ImageGrab.grab(self.rect)), det=True)[0]
         # print([i[1][0] for i in self.screen])
 
     def check(self, lst: list[str]) -> bool:
-        lst.append('尘白禁区')
+        lst.append('尘白')
         for res in self.screen:
             for i in lst[:]:
                 if re.search(i, res[1][0]):
@@ -123,6 +127,9 @@ class CBJQAutoBot:
                 elif self.check(['奖励列表', '退出']):
                     print('战斗结算')
                     self.click('退出')
+                elif self.check(['检测到时间节点变化', '确定']):
+                    print('时间节点变化')
+                    self.click('确定')
                 else:
                     sleep(1)
                     continue
@@ -132,7 +139,7 @@ class CBJQAutoBot:
                 break
             except Exception as e:
                 print(f"错误: {str(e)}")
-                continue
+                sleep(0.5)
 
 
 if __name__ == "__main__":
