@@ -7,19 +7,12 @@
 ## 前置条件
  - 拥有角色: 晨星-琼弦
  - 拥有增益: 护盾·夺取
-## 懒人版
- - 此版本使用CPU进行文字识别
- - [跳转下载](https://github.com/lakwsh/CBJQAutoBot/releases/latest)
 ## 源码运行
- - **注意: 使用GPU的性能约为CPU的1.5~3.5倍(参考值)**
  - 使用GPU文字识别
    - **仅支持英伟达显卡**
-   - 安装[CUDA Toolkit 12.3](https://developer.nvidia.com/cuda-12-3-0-download-archive)
-   - [安装GPU版飞桨](https://www.paddlepaddle.org.cn/install/quick?docurl=/documentation/docs/zh/develop/install/pip/windows-pip.html): `pip install paddlepaddle-gpu==3.0.0rc1 -i https://www.paddlepaddle.org.cn/packages/stable/cu123/`
- - 或者,使用CPU文字识别
-   - [安装CPU版飞桨](https://www.paddlepaddle.org.cn/install/quick?docurl=/documentation/docs/zh/develop/install/pip/windows-pip.html): `pip install paddlepaddle==3.0.0rc1 -i https://www.paddlepaddle.org.cn/packages/stable/cpu/`
-   - 修改源码: `CBJQAutoBot(gpu=True)`改为`CBJQAutoBot(gpu=False)`
- - 安装其他依赖: `pip install pywin32 PyAutoGUI pillow paddleocr numpy`
+   - 安装[CUDA Toolkit 12.9](https://developer.nvidia.com/cuda-12-9-1-download-archive)
+   - [安装GPU版飞桨](https://www.paddlepaddle.org.cn/install/quick?docurl=/documentation/docs/zh/develop/install/pip/windows-pip.html): `pip install paddlepaddle-gpu==3.2.1 -i https://www.paddlepaddle.org.cn/packages/stable/cu129/`
+ - 安装其他依赖: `pip install pywin32 PyAutoGUI paddleocr`
 ## 增益选择逻辑
  - 首选非单体未获得增益
  - 次选非单体已获得增益

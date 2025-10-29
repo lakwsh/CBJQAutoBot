@@ -2,6 +2,7 @@ import ctypes
 import re
 from sys import exit
 from time import sleep
+from random import randint
 
 import numpy as np
 import pyautogui
@@ -9,11 +10,10 @@ import win32con
 import win32gui
 from PIL import ImageGrab
 from paddleocr import PaddleOCR
-from paddleocr.ppocr.utils.logging import get_logger
 
 
 class CBJQAutoBot:
-    def __init__(self, gpu: bool) -> None:
+    def __init__(self) -> None:
         self.hwnd = win32gui.FindWindow(None, '尘白禁区')
         if not self.hwnd:
             print("未找到游戏窗口")
@@ -23,9 +23,9 @@ class CBJQAutoBot:
         sleep(0.1)
         self.rect = win32gui.GetWindowRect(self.hwnd)
         print(self.rect)
-        self.gpu = gpu
-        get_logger().setLevel(0)
-        self.ocr = PaddleOCR(use_gpu=gpu, use_angle_cls=True, lang='ch', ocr_version='PP-OCRv4')
+        self.ocr = PaddleOCR(device='gpu', use_doc_orientation_classify=False, use_doc_unwarping=False,
+                             text_detection_model_name='PP-OCRv5_mobile_det',
+                             text_recognition_model_name='PP-OCRv5_mobile_rec')
         self.screen = []
         region = np.array([(0.052, 0.246, 0.312, 0.801), (0.37, 0.246, 0.63, 0.801), (0.688, 0.246, 0.948, 0.801)])
         self.region = [self.rect[2] - self.rect[0], self.rect[3] - self.rect[1]] * 2 * region
@@ -34,14 +34,15 @@ class CBJQAutoBot:
         if not win32gui.IsWindow(self.hwnd):
             print('无法找到游戏窗口')
             exit(1)
-        self.screen = self.ocr.ocr(img=np.array(ImageGrab.grab(self.rect)), det=True)[0]
-        # print([i[1][0] for i in self.screen])
+        res = self.ocr.predict(np.array(ImageGrab.grab(self.rect)))[0]
+        self.screen = [[res['rec_texts'][i], res['rec_boxes'][i]] for i in range(len(res['rec_texts']))]
+        # print(res['rec_texts'])
 
     def check(self, lst: list[str]) -> bool:
         lst.append('尘白')
         for res in self.screen:
             for i in lst[:]:
-                if re.search(i, res[1][0]):
+                if re.search(i, res[0]):
                     lst.remove(i)
         return len(lst) == 0
 
@@ -51,8 +52,8 @@ class CBJQAutoBot:
             lst = []
             for res in self.screen:
                 # print(res, i)
-                if i[0] <= res[0][0][0] <= i[2] and i[1] <= res[0][0][1] <= i[3]:
-                    lst.append(res[1][0])
+                if len(res[0]) > 2 and i[0] <= res[1][0] <= i[2] and i[1] <= res[1][1] <= i[3]:
+                    lst.append(res[0])
             if not len(lst):
                 raise Exception("增益获取失败")
             skill.append(lst)
@@ -60,11 +61,10 @@ class CBJQAutoBot:
 
     def click(self, text: str) -> bool:
         for i in self.screen:
-            if i[1][0].find(text) != -1:
-                i[0] = np.array(i[0]) + np.array(self.rect[:2])
-                # print(i[0])
-                pos = i[0][2]  # 左上 右上 右下(2) 左下
-                pyautogui.moveTo(pos[0], pos[1], duration=0.1)
+            if i[0].find(text) != -1:
+                i[1] += np.array(self.rect[:2] * 2)
+                # print(i[1])
+                pyautogui.moveTo(i[1][2], i[1][3], duration=0.1)
                 pyautogui.click()
                 sleep(0.1)
                 return True
@@ -87,12 +87,30 @@ class CBJQAutoBot:
                 elif self.check(['积分奖励', '增益获取']):
                     print('验证战场')
                     self.click('增益试炼')
+                elif self.check(['模式选择', '增益试炼·渊底', '增益试炼·幽馆', '增益试炼·异城']):
+                    print('增益试炼')
+                    rand = randint(1, 3)
+                    if rand == 1:
+                        self.click('增益试炼·渊底')
+                    elif rand == 2:
+                        self.click('增益试炼·幽馆')
+                    else:
+                        self.click('增益试炼·异城')
                 elif self.check(['难度选择', '增益试炼·厄险']):
                     print('增益试炼')
                     self.click('增益试炼·厄险')
+                elif self.check(['\s+选择', '增益试炼']):
+                    print('增益试炼')
+                    self.click('增益试炼')
                 elif self.check(['开始作战']):
                     print('开始作战')
                     self.click('开始作战')
+                elif self.check(['坚守阵地', '抵御第1波袭击']):
+                    print('进入战斗')
+                    pyautogui.keyDown('w')
+                    sleep(0.3)
+                    pyautogui.keyUp('w')
+                    sleep(0.2)
                 elif self.check(['第.+波', '击败来袭的敌方目标']):
                     print('战斗中')
                     if cnt < 8:
@@ -118,10 +136,11 @@ class CBJQAutoBot:
                     else:
                         self.click(choice[2][0])
                     self.click('确认')
-                elif self.check(['单体', '丢弃']):
+                elif self.check(['单体', '(丢|丟)弃']):
                     print('选择增益-单体')
+                    self.click('丟弃')
                     self.click('丢弃')
-                elif self.check(['丢弃在试炼中选择的增益', '取消', '确定']):
+                elif self.check(['弃在试炼中选择的增益', '取消', '确定']):
                     print('丢弃增益')
                     self.click('确定')
                 elif self.check(['奖励列表', '退出']):
@@ -133,7 +152,7 @@ class CBJQAutoBot:
                 else:
                     sleep(1)
                     continue
-                sleep(0.5 if self.gpu else 0.25)
+                sleep(0.5)
             except KeyboardInterrupt:
                 print("脚本已停止")
                 break
@@ -146,5 +165,5 @@ if __name__ == "__main__":
     if not ctypes.windll.shell32.IsUserAnAdmin():
         print('请使用管理员权限运行脚本')
         exit(1)
-    bot = CBJQAutoBot(gpu=True)
+    bot = CBJQAutoBot()
     bot.run()
